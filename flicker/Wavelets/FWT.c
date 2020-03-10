@@ -20,195 +20,260 @@
  *
  */
 
-double** MakeArray(int rows, int columns);                           /* Function that makes/allocates an array of pointers    */
+/* Function that makes/allocates an array of pointers    */
+double** MakeArray(int rows, int columns);
 int** MakeIntArray(int rows, int columns);
 int* MakeIntVector(int nelements);
-double* MakeVector(int nelements);                                   /* Function that makes/allocates a pointer in memory     */
-void FreeArray(double** theArray,int rows);                          /* Function that frees an array of pointers from memory  */
+
+/* Function that makes/allocates a pointer in memory */
+double* MakeVector(int nelements);
+
+/* Function that frees an array of pointers from memory  */
+void FreeArray(double** theArray,int rows);
 void FreeIntArray(int** theArray,int rows);
+
 double** Transpose(double** O,int rowsIN, int colsIN);
-void Convolve(double* input,double* c,double* c2,double *output_aproximation,double *output_details,int len_input,int len_c);
-void IConvolve(double* input,double* c,double* c2,double *output,int len_input,int len_c);
+void Convolve(double* input,double* c,double* c2,double *output_aproximation,
+              double *output_details,int len_input,int len_c);
+void IConvolve(double* input,double* c,double* c2,double *output,
+               int len_input,int len_c);
 void UnPermutation(double* data,double *wavelet,double *output,int i);
 /*
-                 [INITIALIZATION OF A METHOD]
-                 
-                 getWC = get Wavelet Coefficients
+    [INITIALIZATION OF A METHOD]
+    getWC = get Wavelet Coefficients
 */
 
 static PyObject *FWT_getWC(PyObject *self, PyObject *args){
-	double *data,*coefficients;
-        int data_len,coefficients_len,M,i,j,len_rows,len_cols;
-	PyObject *dataarray,*coefficientsarray;	
-	PyArg_ParseTuple(args,"OOiii",&dataarray,&coefficientsarray,&data_len,&coefficients_len,&M);
-        data = ARRAYD(dataarray);
-	coefficients = ARRAYD(coefficientsarray);
-// 	printf("%f, %f, coeffs: %f, %f...\n",data[0],data[1],coefficients[0],coefficients[1]);
-	len_cols=data_len/2;
-	len_rows=M;
-	double** WT = MakeArray(len_rows,len_cols); // FREED
-	double* v = MakeVector(data_len/2); // FREED
-	double* v2 = MakeVector(data_len/2); // FREED
-        double* c2 = MakeVector(coefficients_len);
-        c2[0]=coefficients[3];             // We make the high pass filter.
-        c2[1]=-coefficients[2];
-        c2[2]=coefficients[1];
-        c2[3]=-coefficients[0];
-//        printf("Wavelet coefficients used: %f,%f,%f and %f \n",coefficients[0],coefficients[1],coefficients[2],coefficients[3]);
-//        printf("Scaling Coeff. used: %f, %f, %f and %f \n",c2[0],c2[1],c2[2],c2[3]);
-        for(i=0;i<M;i++){
-	  Convolve(data,coefficients,c2,&v[0],&v2[0],data_len,coefficients_len);
-	  for(j=0;j<data_len/2;j++){
-	    WT[i][j]=v2[j];
-	    v2[j]=0.0;
-	    data[j]=v[j];    // I pass the aproximation coefficients to the data vector, to be filtered.
-	    if((data_len/2)!=2)
-               v[j]=0.0;
-	  }
-	  if(data_len/2!=2){
-            data_len=data_len/2;
-	  }
-	  else{
-	    break;
-	  }
-	}
-	free(c2);
-/* End of the matrix-to-vector conversion part of the code. Everything's ok up to here...now I have my theArray[i][j] array (matrix) ready to be called...*/
-        double* theArray;  // NOT FREED
-//        theArray = (double*) malloc((len_cols*len_rows)*sizeof(double));
-//        for(i=0;i<len_rows;i++){
-//           for(j=0;j<len_cols;j++){
-//               theArray[i*len_cols+j]=WT[i][j];
-//            }
-//        }
-        int max_j=0,counter=0,flen=0;
-        for(i=0;i<(len_rows);i++){
-           flen=flen+pow(2,i);
+    // printf("FWT_getWC 0");
+    double *data,*coefficients;
+    // printf("FWT_getWC 1");
+    int data_len,coefficients_len,M,i,j,len_rows,len_cols;
+    // printf("FWT_getWC 2");
+    PyObject *dataarray,*coefficientsarray;    
+    // printf("FWT_getWC 3");
+    PyArg_ParseTuple(args,"OOiii",&dataarray,&coefficientsarray,&data_len,&coefficients_len,&M);
+    // printf("FWT_getWC 4");
+    data = ARRAYD(dataarray);
+    // printf("FWT_getWC 5");
+    coefficients = ARRAYD(coefficientsarray);
+    // printf("FWT_getWC 6");
+    len_cols = data_len/2;
+    // printf("FWT_getWC 7");
+    len_rows = M;
+    // printf("FWT_getWC 8");
+    double** WT = MakeArray(len_rows,len_cols); // FREED
+    // printf("FWT_getWC 9");
+    double* v = MakeVector(data_len/2); // FREED
+    // printf("FWT_getWC 10");
+    double* v2 = MakeVector(data_len/2); // FREED
+    // printf("FWT_getWC 11");
+    double* c2 = MakeVector(coefficients_len);
+    // printf("FWT_getWC 12");
+    c2[0] = coefficients[3];             // We make the high pass filter.
+    // printf("FWT_getWC 13");
+    c2[1] = -coefficients[2];
+    // printf("FWT_getWC 14");
+    c2[2] = coefficients[1];
+    // printf("FWT_getWC 15");
+    c2[3] = -coefficients[0];
+    // printf("FWT_getWC 16");
+
+    for(i = 0;i<M;i++){
+       Convolve(data,coefficients,c2,&v[0],&v2[0],data_len,coefficients_len);
+       for(j = 0;j<data_len/2;j++){
+           WT[i][j] = v2[j];
+           v2[j] = 0.0;
+            data[j] = v[j];
+            /* I pass the aproximation coefficients to the data vector,
+                to be filtered.*/
+        if((data_len/2)!=2)
+            v[j] = 0.0;
         }
-        flen=flen-1;
-        theArray = (double*) malloc((flen)*sizeof(double));
-        for(i=1;i<(len_rows);i++){
-             max_j=pow(2,i);
-             for(j=0;j<max_j;j++){
-                theArray[counter]=WT[len_rows-i-1][j];
-                counter++;
-             }
+
+        if(data_len/2!=2){
+            data_len = data_len/2;
         }
-//        for(i=0;i<(len_rows-1);i++){
-//             for(j=0;j<len_cols;j++){
-//                printf(" %f ",WT[i][j]);
-//             }
-//             printf("\n");
-//        }
-        free(v2);
-        FreeArray(WT,len_rows);
-/* Finally, we create a Python "Object" List that contains the WT coefficients and return it back to Python */
-        
-        // PyObject *lst = PyList_New(len_rows*len_cols);
-        PyObject *lst = PyList_New(flen);
-        PyObject *lst2 = PyList_New(2);
-        PyObject *num;
-	PyObject *num2;
-        if (!lst)
-           return NULL;
-       // for (i = 0; i < len_rows*len_cols; i++) {
-        for (i = 0; i < flen; i++){
-	  if(i==0 || i==1){
-            num2=PyFloat_FromDouble(v[i]);
+        else{
+            break;
+        }
+    }
+    // printf("FWT_getWC 17");
+    free(c2);
+    // printf("FWT_getWC 18");
+    
+    /* End of the matrix-to-vector conversion part of the code. Everything's ok up to here...now I have my theArray[i][j] array (matrix) ready to be called...*/
+    double* theArray;  // NOT FREED
+    // printf("FWT_getWC 19");
+    // theArray = (double*) malloc((len_cols*len_rows)*sizeof(double));
+    // for(i=0;i<len_rows;i++){
+    //     for(j=0;j<len_cols;j++){
+    //        theArray[i*len_cols+j]=WT[i][j];
+    //    }
+    // }
+    int max_j = 0, counter = 0, flen = 0;
+    // printf("FWT_getWC 20");
+    for(i=0;i<(len_rows);i++){
+           flen = flen + pow(2,i);
+    }
+    // printf("FWT_getWC 21");
+    flen = flen - 1;
+    // printf("FWT_getWC 22");
+    theArray = (double*) malloc((flen)*sizeof(double));
+    // printf("FWT_getWC 23");
+    for(i = 1;i<(len_rows);i++){
+         max_j = pow(2,i);
+         for(j = 0;j<max_j;j++){
+            theArray[counter]=WT[len_rows-i-1][j];
+            counter++;
+         }
+    }
+    // printf("FWT_getWC 24");
+    // for(i=0;i<(len_rows-1);i++){
+    //     for(j=0;j<len_cols;j++){
+    //         printf(" %f ",WT[i][j]);
+    //     }
+    // printf("\n");
+    // }
+    free(v2);
+    // printf("FWT_getWC 25");
+    FreeArray(WT,len_rows);
+    // printf("FWT_getWC 26");
+    /* Finally, we create a Python "Object" List that contains
+        the WT coefficients and return it back to Python */
+
+    // PyObject *lst = PyList_New(len_rows*len_cols);
+    PyObject *lst = PyList_New(flen);
+    // printf("FWT_getWC 27");
+    PyObject *lst2 = PyList_New(2);
+    // printf("FWT_getWC 28");
+    PyObject *num;
+    // printf("FWT_getWC 29");
+    PyObject *num2;
+    // printf("FWT_getWC 30");
+    if (!lst)
+       return NULL;
+    // printf("FWT_getWC 31");
+    // for (i = 0; i < len_rows*len_cols; i++) {
+    for (i = 0; i < flen; i++){
+        if(i == 0 || i == 1){
+            num2 = PyFloat_FromDouble(v[i]);
             if (!num2) {
-              Py_DECREF(lst2);
-              return NULL;
+                Py_DECREF(lst2);
+                return NULL;
             }
             PyList_SET_ITEM(lst2, i, num2);    
-	  }
-          num=PyFloat_FromDouble(theArray[i]);
-          if (!num) {
+        }
+        num = PyFloat_FromDouble(theArray[i]);
+        if (!num) {
             Py_DECREF(lst);
             return NULL;
-          }
-          PyList_SET_ITEM(lst, i, num);
         }
-        free(theArray);
-	free(v);
-        PyObject *MyResult = Py_BuildValue("OO",lst,lst2);
-        Py_DECREF(lst);
-	Py_DECREF(lst2);
-        return MyResult;
+        PyList_SET_ITEM(lst, i, num);
+    }
+    // printf("FWT_getWC 32");
+    free(theArray);
+    // printf("FWT_getWC 33");
+    free(v);
+    // printf("FWT_getWC 34");
+    PyObject *MyResult = Py_BuildValue("OO",lst,lst2);
+    // printf("FWT_getWC 35");
+    Py_DECREF(lst);
+    // printf("FWT_getWC 36");
+    Py_DECREF(lst2);
+    // printf("FWT_getWC 37");
+    return MyResult;
 }
 
 static PyObject *FWT_getSignal(PyObject *self, PyObject *args){
-	double *data,*coefficients;
-        int data_len,coefficients_len,M,i,len_input,len;
-	PyObject *dataarray,*coefficientsarray;	
-	PyArg_ParseTuple(args,"OOiii",&dataarray,&coefficientsarray,&data_len,&coefficients_len,&M);
-        data = ARRAYD(dataarray);
-	coefficients = ARRAYD(coefficientsarray);
-// 	printf("%f, %f, coeffs: %f, %f...\n",data[0],data[1],coefficients[0],coefficients[1]);
-	len_input=4;
-	len=pow(2,M);
-	double* v = MakeVector(len); // FREED
-        double* input = MakeVector(len); // FREED
-        double* c2 = MakeVector(coefficients_len); //FREED
-	v[0]=data[0];
-	v[1]=data[1];
-        c2[0]=coefficients[3];             // We make the high pass filter.
-        c2[1]=-coefficients[2];
-        c2[2]=coefficients[1];
-        c2[3]=-coefficients[0];
-        for(i=0;i<(M-1);i++){
-  	  len_input=pow(2,i+2);
-	  UnPermutation(data,&v[0],&input[0],i);
-	  IConvolve(input,coefficients,c2,&v[0],len_input,coefficients_len);
-	}
-	free(c2);
-	free(input);
-/* End of the matrix-to-vector conversion part of the code. Everything's ok up to here...now I have my theArray[i][j] array (matrix) ready to be called...*/
-//        theArray = (double*) malloc((len_cols*len_rows)*sizeof(double));
-//        for(i=0;i<len_rows;i++){
-//           for(j=0;j<len_cols;j++){
-//               theArray[i*len_cols+j]=WT[i][j];
-//            }
-//        }
-//        for(i=0;i<(len_rows-1);i++){
-//             for(j=0;j<len_cols;j++){
-//                printf(" %f ",WT[i][j]);
-//             }
-//             printf("\n");
-//        }
-/* Finally, we create a Python "Object" List that contains the WT coefficients and return it back to Python */
+    double *data,*coefficients;
+    int data_len, coefficients_len, M, i, len_input, len;
+    PyObject *dataarray,*coefficientsarray;
+    PyArg_ParseTuple(args,"OOiii", &dataarray,
+                     &coefficientsarray, &data_len,
+                     &coefficients_len,&M);
+    
+    data = ARRAYD(dataarray);
+    
+    coefficients = ARRAYD(coefficientsarray);
+    
+    len_input = 4;
+    len = pow(2, M);
+
+    double* v = MakeVector(len); // FREED
+    double* input = MakeVector(len); // FREED
+    double* c2 = MakeVector(coefficients_len); //FREED
+    v[0] = data[0];
+    v[1] = data[1];
+    c2[0] = coefficients[3];             // We make the high pass filter.
+    c2[1] = -coefficients[2];
+    c2[2] = coefficients[1];
+    c2[3] = -coefficients[0];
+    for(i = 0;i<(M-1);i++){
+        len_input = pow(2, i+2);
+        UnPermutation(data, &v[0], &input[0],i);
+        IConvolve(input, coefficients, c2, &v[0], len_input, coefficients_len);
+    }
+
+    free(c2);
+    free(input);
+
+    /* End of the matrix-to-vector conversion part of the code. Everything's 
+        ok up to here...now I have my theArray[i][j] array (matrix) ready to 
+        be called...*/
+
+    // theArray = (double*) malloc((len_cols*len_rows)*sizeof(double));
+    // for(i=0;i<len_rows;i++){
+    //     for(j=0;j<len_cols;j++){
+    //         theArray[i*len_cols+j]=WT[i][j];
+    //     }
+    // }
+    // for(i=0;i<(len_rows-1);i++){
+    //     for(j=0;j<len_cols;j++){
+    //         printf(" %f ",WT[i][j]);
+    //     }
+    //     printf("\n");
+    // }
+
+    /* Finally, we create a Python "Object" List that contains 
+        the WT coefficients and return it back to Python */
         
-        // PyObject *lst = PyList_New(len_rows*len_cols);
-        PyObject *lst = PyList_New(len);
-        PyObject *num;
-        if (!lst)
-           return NULL;
-       // for (i = 0; i < len_rows*len_cols; i++) {
-        for (i = 0; i < len; i++){
-          num=PyFloat_FromDouble(v[i]);
-          if (!num) {
+    // PyObject *lst = PyList_New(len_rows*len_cols);
+    PyObject *lst = PyList_New(len);
+    PyObject *num;
+
+    if (!lst)
+       return NULL;
+
+    // for (i = 0; i < len_rows*len_cols; i++) {
+    for (i = 0; i < len; i++){
+        num=PyFloat_FromDouble(v[i]);
+        if (!num) {
             Py_DECREF(lst);
-            return NULL;
-          }
-          PyList_SET_ITEM(lst, i, num);
+        return NULL;
         }
-	free(v);
-        PyObject *MyResult = Py_BuildValue("O",lst);
-        Py_DECREF(lst);
-        return MyResult;
+        PyList_SET_ITEM(lst, i, num);
+    }
+
+    free(v);
+    
+    PyObject *MyResult = Py_BuildValue("O",lst);
+    
+    Py_DECREF(lst);
+    
+    return MyResult;
 }
 
 static PyMethodDef FWTMethods[] = {
-	{"getWC", FWT_getWC, METH_VARARGS, "Obtention of the aproximation and detail coefficients of the WT."},
-	{"getSignal", FWT_getSignal, METH_VARARGS, "Given aproximation and detail coeffs, we get the signal back (IWT)."},
-	{NULL, NULL, 0, NULL}
+    {"getWC", FWT_getWC, METH_VARARGS, "Obtention of the aproximation and detail coefficients of the WT."},
+    {"getSignal", FWT_getSignal, METH_VARARGS, "Given aproximation and detail coeffs, we get the signal back (IWT)."},
+    {NULL, NULL, 0, NULL}
 };
 
 // NUMPY_IMPORT_ARRAY_RETURN_TYPE initFWT(void){
-// 	(void) Py_InitModule("FWT", FWTMethods);
+//     (void) Py_InitModule("FWT", FWTMethods);
 // }
 
-static struct PyModuleDef FWT =
-{
+static struct PyModuleDef FWT = {
     PyModuleDef_HEAD_INIT,
     "FWT", /* name of module */
     "",          /* module documentation, may be NULL */
@@ -217,146 +282,174 @@ static struct PyModuleDef FWT =
 };
 
 PyMODINIT_FUNC
-PyInit_FWT(void)
-{
-  import_array();
-  return PyModule_Create(&FWT);
+PyInit_FWT(void){
+    import_array();
+    return PyModule_Create(&FWT);
 }
 
 
 /*********************************************************************
  *          [START OF THE FUNCTIONS OF THE WT ALGORITHM]             *
  *********************************************************************
- */
-
-void UnPermutation(double* data,double *wavelet,double *output,int i){
-  int j,max_j=pow(2,i+2),middle=max_j/2;
-  for(j=0;j<middle;j++){
-      output[2*j]=wavelet[j];
-      wavelet[j]=0.0;
-      output[2*j+1]=data[middle+j];
-  }
+*/
+void UnPermutation(double* data,double *wavelet, double *output, int i){
+    int j, max_j = pow(2,i+2), middle = max_j/2;
+    for(j = 0; j < middle; j++){
+        output[2*j] = wavelet[j];
+        wavelet[j] = 0.0;
+        output[2*j+1] = data[middle+j];
+    }
 }
 
-void Convolve(double* input,double* c,double* c2,double *output_aproximation,double *output_details,int len_input,int len_c){
-  int i,k,j=0,max_len=(len_input/2)-1; // The max_len is len_input/2-1 because the last WC's are special ones.
-  for(j=0;j<max_len;j++){
-      i=2*j;
-      for(k=0;k<len_c;k++){
-        output_aproximation[j]=output_aproximation[j]+input[i+k]*c[k]; // Low-pass filtered data (aproximations).
-        output_details[j]=output_details[j]+input[i+k]*c2[k]; // High pass filtered data (details).
-      }
-//      printf("%f, %f\n",output_aproximation[j],output_details[j]);
-  }
-  for(k=0;k<2;k++){
-    output_aproximation[max_len]=output_aproximation[max_len]+input[max_len*2+k]*c[k]; // Low-pass filtered data (aproximations).
-    output_details[max_len]=output_details[max_len]+input[max_len*2+k]*c2[k]; // High pass filtered data (details).
-  }  
-  output_aproximation[max_len]=output_aproximation[max_len]+input[0]*c[2]+input[1]*c[3];
-  output_details[max_len]=output_details[max_len]+input[0]*c2[2]+input[1]*c2[3];
+void Convolve(double* input, double* c, double* c2,
+              double *output_aproximation, double *output_details,
+              int len_input, int len_c){
+  
+    // The max_len is len_input/2-1 because the last WC's are special ones.
+    int i, k, j = 0, max_len = (len_input/2)-1;
+    for(j=0;j<max_len;j++){
+        i = 2 * j;
+        for(k = 0;k < len_c; k++){
+            // Low-pass filtered data (aproximations).
+            output_aproximation[j] = output_aproximation[j] + 
+                                     input[i+k] * c[k];
+
+            // High pass filtered data (details).
+            output_details[j] = output_details[j] + 
+                                input[i+k] * c2[k];
+        }
+    }
+
+    for(k = 0; k < 2; k++){
+        // Low-pass filtered data (aproximations).
+        output_aproximation[max_len] = output_aproximation[max_len] + 
+                                       input[max_len*2+k]*c[k];
+
+        // High pass filtered data (details).
+        output_details[max_len] = output_details[max_len] + 
+                                  input[max_len*2+k]*c2[k];
+    }
+
+    output_aproximation[max_len] = output_aproximation[max_len] + 
+                                   input[0]*c[2]+input[1]*c[3];
+
+    output_details[max_len] = output_details[max_len] + input[0] * c2[2] + 
+                              input[1] * c2[3];
 }
 
-void IConvolve(double* input,double* c,double* c2,double *output,int len_input,int len_c){
-  int i,k,j=0,max_len=(len_input/2); // The max_len is len_input/2.
-  for(k=0;k<2;k++){
-    output[0]=output[0]+input[(max_len-1)*2+k]*c[k]; // Low-pass filtered data (aproximations).
-    output[1]=output[1]+input[(max_len-1)*2+k]*c2[k]; // High pass filtered data (details).
-  }   
-  output[0]=output[0]+input[0]*c[2]+input[1]*c[3];
-  output[1]=output[1]+input[0]*c2[2]+input[1]*c2[3];  
-  for(j=1;j<max_len;j++){
-      i=2*(j-1);
-      for(k=0;k<len_c;k++){
-        output[2*j]=output[2*j]+input[i+k]*c[k]; // Low-pass filtered data (aproximations).
-        output[2*j+1]=output[2*j+1]+input[i+k]*c2[k]; // High pass filtered data (details).
-      }
-//      printf("%f, %f\n",output_aproximation[j],output_details[j]);
-  }
+void IConvolve(double* input, double* c, double* c2,
+               double *output, int len_input,int len_c){
+  
+    int i, k, j = 0, max_len = (len_input/2); // The max_len is len_input/2.
+
+    for(k = 0; k < 2; k++){
+        // Low-pass filtered data (aproximations).
+        output[0]=output[0]+input[(max_len-1)*2+k]*c[k];
+
+        // High pass filtered data (details).
+        output[1]=output[1]+input[(max_len-1)*2+k]*c2[k];
+    }
+    
+    output[0] = output[0] + input[0] * c[2] + input[1] * c[3];
+    output[1] = output[1] + input[0] * c2[2] + input[1] * c2[3];  
+    
+    for(j = 1; j < max_len; j++){
+        i = 2 * (j-1);
+        for(k = 0; k < len_c; k++){
+            // Low-pass filtered data (aproximations).
+            output[2*j] = output[2*j] + input[i+k] * c[k];
+
+            // High pass filtered data (details).
+            output[2*j+1] = output[2*j+1] + input[i+k] * c2[k];
+        }
+    }
 }
 
 double** Transpose(double **O,int rowsIN,int colsIN){
-  int i,j;
-  double **OT=MakeArray(colsIN,rowsIN);
-  for(i=0;i<rowsIN;i++){
-     for(j=0;j<colsIN;j++){
-        OT[j][i]=O[i][j];
-     }
-  }
-  FreeArray(O,rowsIN);
-  return OT;
+    int i, j;
+    double **OT = MakeArray(colsIN,rowsIN);
+    for(i = 0; i < rowsIN; i++){
+        for(j = 0; j < colsIN; j++){
+            OT[j][i] = O[i][j];
+        }
+    }
+    FreeArray(O, rowsIN);
+    return OT;
 }
 
-
 int** MakeIntArray(int rows, int columns){
-  int i,j;
-  int** theArray;
-  theArray = (int**) malloc(rows*sizeof(int*));
-  for(i=0;i<rows;i++)
-     theArray[i] = (int*) malloc(columns*sizeof(int));
+    int i,j;
+    int** theArray;
+    theArray = (int**) malloc(rows*sizeof(int*));
+    for(i=0;i<rows;i++)
+        theArray[i] = (int*) malloc(columns*sizeof(int));
 
-/* Fill the array with zeroes (i.e. we clean it) */
+    /* Fill the array with zeroes (i.e. we clean it) */
 
-  for(i=0;i<rows;i++){
-     for(j=0;j<columns;j++){
-       theArray[i][j]=0;
-     }
-  }
+    for(i=0;i<rows;i++){
+        for(j=0;j<columns;j++){
+            theArray[i][j]=0;
+        }
+    }
 
-  return theArray;
+    return theArray;
 }
 
 double** MakeArray(int rows, int columns){
-  int i,j;
-  double** theArray;
-  theArray = (double**) malloc(rows*sizeof(double*));
-  for(i=0;i<rows;i++)
-      theArray[i] = (double*) malloc(columns*sizeof(double));
+    int i,j;
+    double** theArray;
+    theArray = (double**) malloc(rows*sizeof(double*));
+    for(i=0;i<rows;i++)
+        theArray[i] = (double*) malloc(columns*sizeof(double));
 
-/* Fill the array with zeroes (i.e. we clean it) */
+    /* Fill the array with zeroes (i.e. we clean it) */
+    for(i=0;i<rows;i++){
+        for(j=0;j<columns;j++){
+        theArray[i][j]=0.0;
+        }
+    }
 
-  for(i=0;i<rows;i++){
-     for(j=0;j<columns;j++){
-       theArray[i][j]=0.0;
-     }
-  }
-
-  return theArray;
+    return theArray;
 }
 
 double* MakeVector(int nelements){
-  double* Vector;
-  int j;
-  Vector = (double*) malloc(nelements*sizeof(double));
+    double* Vector;
+    int j;
+    Vector = (double*) malloc(nelements*sizeof(double));
 
-  for(j=0;j<nelements;j++){
-       Vector[j]=0.0;
-  }
-  return Vector;
+    for(j=0;j<nelements;j++){
+        Vector[j]=0.0;
+    }
+
+    return Vector;
 }
 
 int* MakeIntVector(int nelements){
-  int* Vector;
-  int j;
-  Vector = (int*) malloc(nelements*sizeof(int));
+    int* Vector;
+    int j;
 
-  for(j=0;j<nelements;j++){
-       Vector[j]=0;
-  }
-   return Vector;
+    Vector = (int*) malloc(nelements*sizeof(int));
+
+    for(j=0;j<nelements;j++){
+        Vector[j]=0;
+    }
+    
+    return Vector;
 }
 
 void FreeArray(double** theArray,int rows){
-  int i;
-  for(i=0;i<rows;i++){
-     free(theArray[i]);
-  }
-  free(theArray);
+    int i;
+    for(i=0;i<rows;i++){
+       free(theArray[i]);
+    }
+    
+    free(theArray);
 }
 
 void FreeIntArray(int** theArray,int rows){
-  int i;
-  for(i=0;i<rows;i++){
-     free(theArray[i]);
-  }
-  free(theArray);
+    int i;
+    for(i=0;i<rows;i++){
+       free(theArray[i]);
+    }
+    free(theArray);
 }

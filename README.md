@@ -26,9 +26,9 @@ To use this code you will need PyMC. To install it, go to:
 
 Installation 
 -------------
-Run the install.py file by doing
+Run the setup.py file by doing
 
-    python install.py
+    python setup.py install
 
 And you are done!
 

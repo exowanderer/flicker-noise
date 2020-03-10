@@ -1,13 +1,13 @@
 import sys
 import numpy as np
 # from pymc import *
-from . import Wavelets
+from .Wavelets import Wavelets
 
 
-def get_likelihood(residuals, sigma_w, sigma_r, gamma=1.0):
+def get_likelihood(residuals, sigma_w, sigma_r, n_data, gamma=1.0):
     like = 0.0
     # Arrays of zeros to be passed to the likelihood function
-    aa, bb, M = Wavelets.getDWT(residuals)
+    aa, bb, M = Wavelets.getDWT(residuals, n_data)
     # Calculate the g(gamma) factor used in Carter & Winn...
     if(gamma == 1.0):
         g_gamma = 1.0 / (2.0 * np.log(2.0))  # (value assuming gamma=1)
